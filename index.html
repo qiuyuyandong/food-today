@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>今天吃什么 - 抽签决定</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .location-section h2, .filter-section h2, .favorites-section h2, .history-section h2 {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .location-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding: 12px;
+            background: #f5f5f5;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            color: #666;
+        }
+
+        .location-info.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .location-info.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+        }
+
+        .btn-icon {
+            padding: 8px;
+            border-radius: 50%;
+        }
+
+        .filter-group {
+            margin-bottom: 15px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+            font-size: 0.95rem;
+        }
+
+        .range-slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #e0e0e0;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .range-value {
+            display: inline-block;
+            margin-left: 10px;
+            padding: 4px 10px;
+            background: #f0f0f0;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .price-options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .price-option {
+            padding: 8px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+            background: white;
+        }
+
+        .price-option:hover {
+            border-color: #667eea;
+        }
+
+        .price-option.selected {
+            background: #667eea;
+            border-color: #667eea;
+            color: white;
+        }
+
+        .lottery-section {
+            text-align: center;
+        }
+
+        .lottery-display {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 20px;
+            padding: 40px 20px;
+            margin: 20px 0;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .lottery-rolling {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            animation: pulse 0.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .lottery-result {
+            display: none;
+        }
+
+        .lottery-result.show {
+            display: block;
+            animation: bounceIn 0.6s ease;
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .restaurant-name {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .restaurant-info {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .restaurant-rating {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #ff9800;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .restaurant-tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        .tag {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+        }
+
+        .restaurant-list {
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .restaurant-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+
+        .restaurant-item:hover {
+            background: #f5f5f5;
+        }
+
+        .restaurant-item-info {
+            flex: 1;
+        }
+
+        .restaurant-item-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 1rem;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .restaurant-item-meta {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .restaurant-item-rating {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            background: #ff9800;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .restaurant-item-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .fav-btn {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .fav-btn:hover {
+            background: #f5f5f5;
+        }
+
+        .fav-btn.active {
+            color: #e91e63;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #fff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            background: #4caf50;
+        }
+
+        .toast.error {
+            background: #f44336;
+        }
+
+        .section-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .section-tab {
+            padding: 8px 16px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 0.95rem;
+            color: #666;
+            border-radius: 20px;
+            transition: all 0.2s;
+        }
+
+        .section-tab:hover {
+            background: #f5f5f5;
+        }
+
+        .section-tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .section-content {
+            display: none;
+        }
+
+        .section-content.active {
+            display: block;
+        }
+
+        /* 详情弹窗 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #999;
+            padding: 5px;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .detail-section {
+            margin-bottom: 20px;
+        }
+
+        .detail-section h4 {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .detail-value {
+            font-size: 1.1rem;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .detail-tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .detail-tag {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+        }
+
+        .detail-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .detail-actions .btn {
+            flex: 1;
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .restaurant-name {
+                font-size: 1.6rem;
+            }
+
+            .lottery-rolling {
+                font-size: 1.5rem;
+            }
+
+            .section-tabs {
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎲 今天吃什么</h1>
+            <p>让命运决定你的下一餐</p>
+        </div>
+
+        <!-- 定位部分 -->
+        <div class="card">
+            <div class="location-section">
+                <h2>📍 当前位置</h2>
+                <div id="locationInfo" class="location-info">
+                    <span>🌍</span>
+                    <span>点击按钮获取您的位置</span>
+                </div>
+                <button id="getLocationBtn" class="btn btn-primary">
+                    <span>📍</span>
+                    <span>获取位置并搜索餐厅</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 筛选部分 -->
+        <div class="card" id="filterCard" style="display: none;">
+            <div class="filter-section">
+                <h2>🔍 筛选条件</h2>
+
+                <div class="filter-group">
+                    <label>搜索范围 <span class="range-value" id="radiusValue">1000</span> 米</label>
+                    <input type="range" class="range-slider" id="radiusSlider" min="500" max="5000" step="500" value="1000">
+                </div>
+
+                <div class="filter-group">
+                    <label>人均消费</label>
+                    <div class="price-options" id="priceOptions">
+                        <div class="price-option selected" data-price="all">全部</div>
+                        <div class="price-option" data-price="0-30">¥30以下</div>
+                        <div class="price-option" data-price="30-60">¥30-60</div>
+                        <div class="price-option" data-price="60-100">¥60-100</div>
+                        <div class="price-option" data-price="100+">¥100以上</div>
+                    </div>
+                </div>
+
+                <button id="applyFilterBtn" class="btn btn-primary" style="width: 100%;">
+                    <span>🔍</span>
+                    <span>应用筛选</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 收藏和历史标签页 -->
+        <div class="card" id="tabsCard" style="display: none;">
+            <div class="section-tabs">
+                <button class="section-tab active" data-tab="restaurants">🍽️ 附近餐厅</button>
+                <button class="section-tab" data-tab="favorites">❤️ 收藏</button>
+                <button class="section-tab" data-tab="history">📜 历史</button>
+            </div>
+
+            <!-- 餐厅列表 -->
+            <div class="section-content active" id="restaurantsSection">
+                <h3 style="margin-bottom: 15px; color: #666; font-size: 1rem;">找到 <span id="resultCount">0</span> 家餐厅</h3>
+                <div id="restaurantList" class="restaurant-list"></div>
+            </div>
+
+            <!-- 收藏列表 -->
+            <div class="section-content" id="favoritesSection">
+                <div id="favoritesList" class="restaurant-list">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">❤️</div>
+                        <p>暂无收藏的餐厅</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 历史记录 -->
+            <div class="section-content" id="historySection">
+                <div id="historyList" class="restaurant-list">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📜</div>
+                        <p>暂无抽签历史</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 抽签部分 -->
+        <div class="card" id="lotteryCard" style="display: none;">
+            <div class="lottery-section">
+                <h2>🎰 开始抽签</h2>
+                <div class="lottery-display">
+                    <div id="lotteryRolling" class="lottery-rolling" style="display: none;">
+                        🎲 抽签中...
+                    </div>
+                    <div id="lotteryResult" class="lottery-result">
+                        <div class="restaurant-name" id="resultName">?</div>
+                        <div class="restaurant-info" id="resultAddress">点击按钮开始抽签</div>
+                        <div class="restaurant-rating" id="resultRating" style="display: none;">
+                            <span>⭐</span>
+                            <span id="ratingValue">0.0</span>
+                        </div>
+                        <div class="restaurant-tags" id="resultTags"></div>
+                    </div>
+                </div>
+                <button id="startLotteryBtn" class="btn btn-primary" disabled>
+                    <span>🎲</span>
+                    <span>开始抽签</span>
+                </button>
+                <button id="reselectBtn" class="btn btn-secondary" style="display: none; margin-top: 10px;">
+                    <span>🔄</span>
+                    <span>重新选择</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 详情弹窗 -->
+    <div class="modal-overlay" id="detailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">餐厅详情</div>
+                <button class="modal-close" id="modalClose">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- 动态内容 -->
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // 本地餐厅数据库（按城市分类）
+        const restaurantDB = {
+            // 通用连锁餐厅（全国各地都有）
+            common: [
+                { name: '麦当劳', type: '快餐', price: 35, rating: 4.2, tags: ['汉堡', '薯条'] },
+                { name: '肯德基', type: '快餐', price: 40, rating: 4.1, tags: ['炸鸡', '汉堡'] },
+                { name: '必胜客', type: '西餐', price: 80, rating: 4.0, tags: ['披萨', '意面'] },
+                { name: '汉堡王', type: '快餐', price: 45, rating: 4.0, tags: ['汉堡', '薯条'] },
+                { name: '星巴克', type: '咖啡', price: 40, rating: 4.3, tags: ['咖啡', '甜点'] },
+                { name: '喜茶', type: '奶茶', price: 25, rating: 4.2, tags: ['奶茶', '果茶'] },
+                { name: '奈雪的茶', type: '奶茶', price: 28, rating: 4.1, tags: ['奶茶', '面包'] },
+                { name: '蜜雪冰城', type: '奶茶', price: 10, rating: 4.0, tags: ['奶茶', '冰淇淋'] },
+                { name: 'CoCo都可', type: '奶茶', price: 18, rating: 4.0, tags: ['奶茶', '果茶'] },
+                { name: '真功夫', type: '快餐', price: 35, rating: 3.9, tags: ['中式快餐', '蒸饭'] },
+                { name: '永和大王', type: '快餐', price: 30, rating: 3.9, tags: ['豆浆', '油条'] },
+                { name: '吉野家', type: '快餐', price: 35, rating: 4.0, tags: ['牛肉饭', '日式快餐'] },
+                { name: '味千拉面', type: '日料', price: 45, rating: 3.9, tags: ['拉面', '日式'] },
+                { name: '西贝莜面村', type: '中餐', price: 80, rating: 4.2, tags: ['西北菜', '面食'] },
+                { name: '海底捞', type: '火锅', price: 120, rating: 4.5, tags: ['火锅', '服务'] },
+                { name: '呷哺呷哺', type: '火锅', price: 60, rating: 4.0, tags: ['小火锅', '台式'] },
+                { name: '小龙坎', type: '火锅', price: 100, rating: 4.2, tags: ['四川火锅', '麻辣'] },
+                { name: '巴奴毛肚火锅', type: '火锅', price: 110, rating: 4.3, tags: ['毛肚', '火锅'] },
+                { name: ' Pizza Hut', type: '西餐', price: 80, rating: 4.0, tags: ['披萨', '意式'] },
+                { name: ' Taco Bell', type: '西餐', price: 35, rating: 3.8, tags: ['墨西哥', '卷饼'] },
+                { name: ' Subway', type: '快餐', price: 30, rating: 3.9, tags: ['三明治', '健康'] },
+                { name: ' 沙县小吃', type: '小吃', price: 20, rating: 4.0, tags: ['福建小吃', '经济'] },
+                { name: ' 兰州拉面', type: '小吃', price: 18, rating: 4.0, tags: ['西北面食', '牛肉'] },
+                { name: ' 黄焖鸡米饭', type: '小吃', price: 25, rating: 4.1, tags: ['山东小吃', '鸡肉'] },
+                { name: ' 麻辣烫', type: '小吃', price: 30, rating: 4.0, tags: ['四川小吃', '自选'] },
+                { name: ' 煎饼果子', type: '小吃', price: 12, rating: 4.2, tags: ['天津小吃', '早餐'] },
+                { name: ' 肉夹馍', type: '小吃', price: 15, rating: 4.1, tags: ['陕西小吃', '面食'] },
+                { name: ' 螺蛳粉', type: '小吃', price: 20, rating: 4.0, tags: ['广西小吃', '酸辣'] },
+                { name: ' 热干面', type: '小吃', price: 12, rating: 4.0, tags: ['湖北小吃', '早餐'] },
+                { name: ' 串串香', type: '火锅', price: 50, rating: 4.1, tags: ['四川小吃', '麻辣'] },
+                { name: ' 冒菜', type: '小吃', price: 35, rating: 4.0, tags: ['四川小吃', '麻辣烫'] },
+                { name: ' 钵钵鸡', type: '小吃', price: 40, rating: 4.1, tags: ['四川小吃', '冷串'] }
+            ]
+        };
+
+        // 状态管理
+        const state = {
+            location: null,
+            city: null,
+            radius: 1000,
+            priceRange: 'all',
+            restaurants: [],
+            filteredRestaurants: [],
+            favorites: JSON.parse(localStorage.getItem('favorites') || '[]'),
+            history: JSON.parse(localStorage.getItem('history') || '[]'),
+            isRolling: false
+        };
+
+        // DOM 元素
+        const elements = {
+            locationInfo: document.getElementById('locationInfo'),
+            getLocationBtn: document.getElementById('getLocationBtn'),
+            filterCard: document.getElementById('filterCard'),
+            tabsCard: document.getElementById('tabsCard'),
+            lotteryCard: document.getElementById('lotteryCard'),
+            radiusSlider: document.getElementById('radiusSlider'),
+            radiusValue: document.getElementById('radiusValue'),
+            priceOptions: document.querySelectorAll('.price-option'),
+            applyFilterBtn: document.getElementById('applyFilterBtn'),
+            sectionTabs: document.querySelectorAll('.section-tab'),
+            sectionContents: document.querySelectorAll('.section-content'),
+            resultCount: document.getElementById('resultCount'),
+            restaurantList: document.getElementById('restaurantList'),
+            favoritesList: document.getElementById('favoritesList'),
+            historyList: document.getElementById('historyList'),
+            startLotteryBtn: document.getElementById('startLotteryBtn'),
+            reselectBtn: document.getElementById('reselectBtn'),
+            lotteryRolling: document.getElementById('lotteryRolling'),
+            lotteryResult: document.getElementById('lotteryResult'),
+            resultName: document.getElementById('resultName'),
+            resultAddress: document.getElementById('resultAddress'),
+            resultRating: document.getElementById('resultRating'),
+            ratingValue: document.getElementById('ratingValue'),
+            resultTags: document.getElementById('resultTags'),
+            detailModal: document.getElementById('detailModal'),
+            modalTitle: document.getElementById('modalTitle'),
+            modalBody: document.getElementById('modalBody'),
+            modalClose: document.getElementById('modalClose'),
+            toast: document.getElementById('toast')
+        };
+
+        // 显示提示
+        function showToast(message, type = 'info') {
+            elements.toast.textContent = message;
+            elements.toast.className = `toast ${type} show`;
+            setTimeout(() => {
+                elements.toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // 获取位置
+        function getLocation() {
+            if (!navigator.geolocation) {
+                showToast('您的浏览器不支持地理定位', 'error');
+                return;
+            }
+
+            elements.getLocationBtn.disabled = true;
+            elements.locationInfo.className = 'location-info';
+            elements.locationInfo.innerHTML = '<span class="loading-spinner"></span><span>正在获取位置...</span>';
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    state.location = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+
+                    // 根据经纬度估算城市（简化版）
+                    state.city = 'common'; // 默认使用通用餐厅库
+
+                    elements.locationInfo.className = 'location-info success';
+                    elements.locationInfo.innerHTML = `
+                        <span>✅</span>
+                        <span>已获取位置 (${state.location.lat.toFixed(4)}, ${state.location.lng.toFixed(4)})</span>
+                    `;
+
+                    showToast('位置获取成功！正在搜索附近餐厅...', 'success');
+
+                    // 显示其他卡片
+                    elements.filterCard.style.display = 'block';
+                    elements.tabsCard.style.display = 'block';
+                    elements.lotteryCard.style.display = 'block';
+
+                    // 生成附近餐厅
+                    generateNearbyRestaurants();
+                },
+                (error) => {
+                    let errorMsg = '获取位置失败';
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMsg = '请允许访问您的位置';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMsg = '位置信息不可用';
+                            break;
+                        case error.TIMEOUT:
+                            errorMsg = '获取位置超时';
+                            break;
+                    }
+
+                    elements.locationInfo.className = 'location-info error';
+                    elements.locationInfo.innerHTML = `<span>❌</span><span>${errorMsg}</span>`;
+                    elements.getLocationBtn.disabled = false;
+                    showToast(errorMsg, 'error');
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 60000
+                }
+            );
+        }
+
+        // 生成附近餐厅（基于真实位置生成模拟数据）
+        function generateNearbyRestaurants() {
+            const baseRestaurants = restaurantDB.common || [];
+            const restaurants = [];
+
+            // 根据用户位置生成不同距离的餐厅
+            for (let i = 0; i < baseRestaurants.length; i++) {
+                const base = baseRestaurants[i];
+                // 随机距离（根据搜索范围）
+                const distance = Math.floor(Math.random() * state.radius) + 100;
+
+                restaurants.push({
+                    id: `rest_${i}`,
+                    name: base.name,
+                    type: base.type,
+                    price: base.price,
+                    rating: base.rating,
+                    distance: distance,
+                    tags: base.tags,
+                    address: `距离您 ${distance} 米`,
+                    phone: `13${Math.floor(Math.random() * 9 + 1)}${String(Math.random()).slice(2, 10)}`,
+                    businessHours: '09:00-22:00',
+                    description: `${base.name}是一家${base.type}餐厅，提供优质的${base.tags.join('、')}等美食。`,
+                    isFavorite: state.favorites.some(f => f.id === `rest_${i}`)
+                });
+            }
+
+            // 按距离排序
+            state.restaurants = restaurants.sort((a, b) => a.distance - b.distance);
+
+            // 应用筛选
+            applyFilters();
+
+            showToast(`已生成 ${restaurants.length} 家附近餐厅`, 'success');
+        }
+
+        // 应用筛选
+        function applyFilters() {
+            let filtered = [...state.restaurants];
+
+            // 距离筛选
+            filtered = filtered.filter(r => r.distance <= state.radius);
+
+            // 价格筛选
+            if (state.priceRange !== 'all') {
+                const [min, max] = state.priceRange.split('-').map(v => v === '100+' ? 100 : parseInt(v));
+                if (state.priceRange === '100+') {
+                    filtered = filtered.filter(r => r.price >= 100);
+                } else {
+                    filtered = filtered.filter(r => r.price >= min && r.price <= max);
+                }
+            }
+
+            state.filteredRestaurants = filtered;
+
+            // 更新显示
+            elements.resultCount.textContent = filtered.length;
+            renderRestaurantList();
+            updateLotteryButton();
+        }
+
+        // 渲染餐厅列表
+        function renderRestaurantList() {
+            const restaurants = state.filteredRestaurants;
+
+            if (restaurants.length === 0) {
+                elements.restaurantList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🍴</div>
+                        <p>没有找到符合条件的餐厅</p>
+                        <p style="font-size: 0.9rem; margin-top: 10px;">试试调整筛选条件</p>
+                    </div>
+                `;
+                return;
+            }
+
+            elements.restaurantList.innerHTML = restaurants.map(r => `
+                <div class="restaurant-item" data-id="${r.id}">
+                    <div class="restaurant-item-info">
+                        <div class="restaurant-item-name">
+                            ${r.name}
+                            <span class="restaurant-item-rating">⭐ ${r.rating}</span>
+                        </div>
+                        <div class="restaurant-item-meta">
+                            ${r.type} · ${r.address} · ¥${r.price}/人
+                        </div>
+                    </div>
+                    <div class="restaurant-item-actions">
+                        <button class="fav-btn ${r.isFavorite ? 'active' : ''}" data-id="${r.id}" title="${r.isFavorite ? '取消收藏' : '收藏'}">
+                            ${r.isFavorite ? '❤️' : '🤍'}
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            // 绑定点击事件
+            elements.restaurantList.querySelectorAll('.restaurant-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    if (!e.target.closest('.fav-btn')) {
+                        const id = item.dataset.id;
+                        showRestaurantDetail(id);
+                    }
+                });
+            });
+
+            // 绑定收藏按钮事件
+            elements.restaurantList.querySelectorAll('.fav-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = btn.dataset.id;
+                    toggleFavorite(id);
+                });
+            });
+        }
+
+        // 显示餐厅详情
+        function showRestaurantDetail(id) {
+            const restaurant = state.restaurants.find(r => r.id === id);
+            if (!restaurant) return;
+
+            elements.modalTitle.textContent = restaurant.name;
+            elements.modalBody.innerHTML = `
+                <div class="detail-section">
+                    <h4>基本信息</h4>
+                    <div class="detail-value">
+                        <div style="margin-bottom: 8px;">
+                            <span class="restaurant-item-rating" style="font-size: 1rem;">⭐ ${restaurant.rating}</span>
+                            <span style="margin-left: 10px; color: #e91e63; font-weight: 600;">¥${restaurant.price}/人</span>
+                        </div>
+                        <div>${restaurant.type} · ${restaurant.address}</div>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h4>标签</h4>
+                    <div class="detail-tags">
+                        ${restaurant.tags.map(tag => `<span class="detail-tag">${tag}</span>`).join('')}
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h4>联系方式</h4>
+                    <div class="detail-value">
+                        <div>📞 ${restaurant.phone}</div>
+                        <div style="margin-top: 5px;">🕐 营业时间：${restaurant.businessHours}</div>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h4>简介</h4>
+                    <div class="detail-value">${restaurant.description}</div>
+                </div>
+
+                <div class="detail-actions">
+                    <button class="btn btn-primary ${restaurant.isFavorite ? 'btn-secondary' : ''}" id="modalFavBtn">
+                        ${restaurant.isFavorite ? '❤️ 已收藏' : '🤍 收藏'}
+                    </button>
+                    <button class="btn btn-secondary" id="modalCloseBtn">关闭</button>
+                </div>
+            `;
+
+            elements.detailModal.classList.add('show');
+
+            // 绑定弹窗内按钮事件
+            document.getElementById('modalFavBtn').addEventListener('click', () => {
+                toggleFavorite(id);
+                // 更新按钮状态
+                const restaurant = state.restaurants.find(r => r.id === id);
+                const btn = document.getElementById('modalFavBtn');
+                btn.innerHTML = restaurant.isFavorite ? '❤️ 已收藏' : '🤍 收藏';
+                btn.className = restaurant.isFavorite ? 'btn btn-secondary' : 'btn btn-primary';
+            });
+
+            document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
+        }
+
+        // 关闭弹窗
+        function closeModal() {
+            elements.detailModal.classList.remove('show');
+        }
+
+        // 切换收藏
+        function toggleFavorite(id) {
+            const restaurant = state.restaurants.find(r => r.id === id);
+            if (!restaurant) return;
+
+            const index = state.favorites.findIndex(f => f.id === id);
+            if (index === -1) {
+                // 添加收藏
+                state.favorites.push({
+                    ...restaurant,
+                    isFavorite: true,
+                    favoritedAt: new Date().toISOString()
+                });
+                restaurant.isFavorite = true;
+                showToast('已添加到收藏', 'success');
+            } else {
+                // 取消收藏
+                state.favorites.splice(index, 1);
+                restaurant.isFavorite = false;
+                showToast('已取消收藏', 'info');
+            }
+
+            // 保存到本地存储
+            localStorage.setItem('favorites', JSON.stringify(state.favorites));
+
+            // 更新UI
+            renderRestaurantList();
+            renderFavorites();
+        }
+
+        // 渲染收藏列表
+        function renderFavorites() {
+            if (state.favorites.length === 0) {
+                elements.favoritesList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">❤️</div>
+                        <p>暂无收藏的餐厅</p>
+                    </div>
+                `;
+                return;
+            }
+
+            elements.favoritesList.innerHTML = state.favorites.map(r => `
+                <div class="restaurant-item" data-id="${r.id}">
+                    <div class="restaurant-item-info">
+                        <div class="restaurant-item-name">
+                            ${r.name}
+                            <span class="restaurant-item-rating">⭐ ${r.rating}</span>
+                        </div>
+                        <div class="restaurant-item-meta">
+                            ${r.type} · ${r.address || '距离未知'} · ¥${r.price}/人
+                        </div>
+                    </div>
+                    <div class="restaurant-item-actions">
+                        <button class="fav-btn active" data-id="${r.id}" title="取消收藏">
+                            ❤️
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            // 绑定事件
+            elements.favoritesList.querySelectorAll('.restaurant-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    if (!e.target.closest('.fav-btn')) {
+                        const id = item.dataset.id;
+                        showRestaurantDetail(id);
+                    }
+                });
+            });
+
+            elements.favoritesList.querySelectorAll('.fav-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = btn.dataset.id;
+                    toggleFavorite(id);
+                });
+            });
+        }
+
+        // 添加历史记录
+        function addToHistory(restaurant) {
+            const historyItem = {
+                ...restaurant,
+                drawnAt: new Date().toISOString()
+            };
+
+            // 添加到开头
+            state.history.unshift(historyItem);
+
+            // 只保留最近50条
+            if (state.history.length > 50) {
+                state.history = state.history.slice(0, 50);
+            }
+
+            // 保存
+            localStorage.setItem('history', JSON.stringify(state.history));
+
+            // 更新显示
+            renderHistory();
+        }
+
+        // 渲染历史记录
+        function renderHistory() {
+            if (state.history.length === 0) {
+                elements.historyList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📜</div>
+                        <p>暂无抽签历史</p>
+                    </div>
+                `;
+                return;
+            }
+
+            elements.historyList.innerHTML = state.history.map((r, index) => {
+                const date = new Date(r.drawnAt);
+                const dateStr = `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+
+                return `
+                    <div class="restaurant-item" data-id="${r.id}">
+                        <div class="restaurant-item-info">
+                            <div class="restaurant-item-name">
+                                ${r.name}
+                                <span class="restaurant-item-rating">⭐ ${r.rating}</span>
+                            </div>
+                            <div class="restaurant-item-meta">
+                                ${dateStr} · ${r.type} · ¥${r.price}/人
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // 绑定点击事件
+            elements.historyList.querySelectorAll('.restaurant-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const id = item.dataset.id;
+                    showRestaurantDetail(id);
+                });
+            });
+        }
+
+        // 更新抽签按钮状态
+        function updateLotteryButton() {
+            const hasRestaurants = state.filteredRestaurants.length > 0;
+            elements.startLotteryBtn.disabled = !hasRestaurants || state.isRolling;
+
+            if (!hasRestaurants && state.restaurants.length > 0) {
+                elements.startLotteryBtn.innerHTML = '<span>⚠️</span><span>没有符合条件的餐厅</span>';
+            } else {
+                elements.startLotteryBtn.innerHTML = '<span>🎲</span><span>开始抽签</span>';
+            }
+        }
+
+        // 开始抽签
+        function startLottery() {
+            if (state.filteredRestaurants.length === 0) {
+                showToast('暂无可用的餐厅', 'error');
+                return;
+            }
+
+            if (state.isRolling) return;
+
+            state.isRolling = true;
+            elements.startLotteryBtn.disabled = true;
+            elements.startLotteryBtn.style.display = 'none';
+            elements.reselectBtn.style.display = 'none';
+            elements.lotteryResult.classList.remove('show');
+            elements.lotteryRolling.style.display = 'block';
+
+            // 滚动动画
+            let count = 0;
+            const totalRolls = 20;
+            const interval = setInterval(() => {
+                const randomIndex = Math.floor(Math.random() * state.filteredRestaurants.length);
+                const restaurant = state.filteredRestaurants[randomIndex];
+                elements.lotteryRolling.textContent = restaurant.name;
+                count++;
+
+                if (count >= totalRolls) {
+                    clearInterval(interval);
+                    showResult();
+                }
+            }, 100);
+        }
+
+        // 显示结果
+        function showResult() {
+            const winner = state.filteredRestaurants[Math.floor(Math.random() * state.filteredRestaurants.length)];
+
+            // 添加到历史
+            addToHistory(winner);
+
+            elements.lotteryRolling.style.display = 'none';
+            elements.lotteryResult.classList.add('show');
+
+            elements.resultName.textContent = winner.name;
+            elements.resultAddress.textContent = `${winner.type} · ${winner.address} · ¥${winner.price}/人`;
+            elements.resultRating.style.display = 'inline-flex';
+            elements.ratingValue.textContent = winner.rating;
+
+            elements.resultTags.innerHTML = [
+                `<span class="tag">${winner.type}</span>`,
+                `<span class="tag">距离${winner.distance}米</span>`,
+                `<span class="tag">⭐ ${winner.rating}分</span>`,
+                `<span class="tag">¥${winner.price}/人</span>`,
+                ...winner.tags.slice(0, 2).map(tag => `<span class="tag">${tag}</span>`)
+            ].join('');
+
+            state.isRolling = false;
+            elements.reselectBtn.style.display = 'inline-flex';
+
+            showToast(`🎉 决定了！今天就吃「${winner.name}」`, 'success');
+        }
+
+        // 重新选择
+        function resetLottery() {
+            elements.lotteryResult.classList.remove('show');
+            elements.lotteryRolling.style.display = 'none';
+            elements.startLotteryBtn.style.display = 'inline-flex';
+            elements.startLotteryBtn.disabled = state.filteredRestaurants.length === 0;
+            elements.reselectBtn.style.display = 'none';
+            elements.resultName.textContent = '?';
+            elements.resultAddress.textContent = '点击按钮开始抽签';
+            elements.resultRating.style.display = 'none';
+            elements.resultTags.innerHTML = '';
+            updateLotteryButton();
+        }
+
+        // 切换标签页
+        function switchTab(tabName) {
+            elements.sectionTabs.forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.tab === tabName);
+            });
+            elements.sectionContents.forEach(content => {
+                content.classList.toggle('active', content.id === `${tabName}Section`);
+            });
+        }
+
+        // 初始化
+        function init() {
+            // 加载保存的数据
+            renderFavorites();
+            renderHistory();
+
+            // 绑定事件
+            elements.getLocationBtn.addEventListener('click', getLocation);
+            elements.startLotteryBtn.addEventListener('click', startLottery);
+            elements.reselectBtn.addEventListener('click', resetLottery);
+            elements.applyFilterBtn.addEventListener('click', applyFilters);
+
+            // 距离滑块
+            elements.radiusSlider.addEventListener('input', (e) => {
+                state.radius = parseInt(e.target.value);
+                elements.radiusValue.textContent = state.radius;
+            });
+
+            // 价格选项
+            elements.priceOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    elements.priceOptions.forEach(opt => opt.classList.remove('selected'));
+                    option.classList.add('selected');
+                    state.priceRange = option.dataset.price;
+                });
+            });
+
+            // 标签切换
+            elements.sectionTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    switchTab(tab.dataset.tab);
+                });
+            });
+
+            // 弹窗关闭
+            elements.modalClose.addEventListener('click', closeModal);
+            elements.detailModal.addEventListener('click', (e) => {
+                if (e.target === elements.detailModal) {
+                    closeModal();
+                }
+            });
+        }
+
+        // 启动
+        init();
+    </script>
+</body>
+</html>
