@@ -1,0 +1,435 @@
+<!-- 今天吃什么 - 主页面 -->
+<view class="container">
+  <!-- 头部 -->
+  <view class="header">
+    <text class="header-title">🎲 今天吃什么</text>
+    <text class="header-subtitle">让命运决定你的下一餐</text>
+  </view>
+
+  <!-- 定位部分 -->
+  <view class="card">
+    <view class="card-title">
+      <text class="card-title-icon">📍</text>
+      <text>当前位置</text>
+    </view>
+    <view class="location-info {{locationStatus}}">
+      <text>{{locationIcon}}</text>
+      <text>{{locationText}}</text>
+    </view>
+    <button class="btn btn-primary" bindtap="getLocation" disabled="{{isLocating}}">
+      <text>{{isLocating ? '定位中...' : '📍 获取位置并搜索餐厅'}}</text>
+    </button>
+  </view>
+
+  <!-- 筛选部分 -->
+  <view class="card" wx:if="{{showFilter}}">
+    <view class="card-title">
+      <text class="card-title-icon">🔍</text>
+      <text>筛选条件</text>
+    </view>
+
+    <view class="filter-group">
+      <text class="filter-label">搜索范围 <text class="range-value">{{radius}}</text> 米</text>
+      <slider class="range-slider" min="500" max="5000" step="500" value="{{radius}}" bindchange="onRadiusChange" show-value/>
+    </view>
+
+    <view class="filter-group">
+      <text class="filter-label">人均消费</text>
+      <view class="price-options">
+        <view
+          class="price-option {{priceRange === 'all' ? 'selected' : ''}}"
+          data-value="all"
+          bindtap="onPriceChange"
+        >全部</view>
+        <view
+          class="price-option {{priceRange === '0-30' ? 'selected' : ''}}"
+          data-value="0-30"
+          bindtap="onPriceChange"
+        >¥30以下</view>
+        <view
+          class="price-option {{priceRange === '30-60' ? 'selected' : ''}}"
+          data-value="30-60"
+          bindtap="onPriceChange"
+        >¥30-60</view>
+        <view
+          class="price-option {{priceRange === '60-100' ? 'selected' : ''}}"
+          data-value="60-100"
+          bindtap="onPriceChange"
+        >¥60-100</view>
+        <view
+          class="price-option {{priceRange === '100+' ? 'selected' : ''}}"
+          data-value="100+"
+          bindtap="onPriceChange"
+        >¥100以上</view>
+      </view>
+    </view>
+
+    <button class="btn btn-primary" style="width: 100%;" bindtap="applyFilter">应用筛选</button>
+  </view>
+
+  <!-- 餐厅列表 -->
+  <view class="card" wx:if="{{showRestaurantList}}">
+    <view class="section-tabs">
+      <view class="section-tab {{activeTab === 'restaurants' ? 'active' : ''}}" data-tab="restaurants" bindtap="switchTab">
+        <text>🍽️ 附近</text>
+      </view>
+      <view class="section-tab {{activeTab === 'favorites' ? 'active' : ''}}" data-tab="favorites" bindtap="switchTab">
+        <text>❤️ 收藏</text>
+        <text wx:if="{{favorites.length > 0}}" class="badge">{{favorites.length}}</text>
+      </view>
+      <view class="section-tab {{activeTab === 'history' ? 'active' : ''}}" data-tab="history" bindtap="switchTab">
+        <text>📜 历史</text>
+      </view>
+    </view>
+
+    <!-- 附近餐厅 -->
+    <view class="section-content {{activeTab === 'restaurants' ? 'active' : ''}}">
+      <view class="result-count">找到 <text class="count">{{filteredRestaurants.length}}</text> 家餐厅</view>
+      <view class="restaurant-list">
+        <view
+          class="restaurant-item"
+          wx:for="{{filteredRestaurants}}"
+          wx:key="id"
+          data-id="{{item.id}}"
+          bindtap="showRestaurantDetail"
+        >
+          <view class="restaurant-header">
+            <view class="restaurant-name">
+              <text>{{item.name}}</text>
+              <view class="restaurant-rating">
+                <text>⭐ {{item.rating}}</text>
+              </view>
+            </view>
+            <view class="restaurant-actions">
+              <view class="fav-btn {{item.isFavorite ? 'active' : ''}}" data-id="{{item.id}}" catchtap="toggleFavorite">
+                <text>{{item.isFavorite ? '❤️' : '🤍'}}</text>
+              </view>
+            </view>
+          </view>
+          <view class="restaurant-address">
+            <text>📍 {{item.address}}</text>
+            <view class="nav-btn" data-name="{{item.name}}" data-address="{{item.address}}" data-lat="{{item.lat}}" data-lng="{{item.lng}}" catchtap="openNavigation">
+              <text>🧭 导航</text>
+            </view>
+          </view>
+          <view class="menu-scroll">
+            <view class="menu-tag {{dish.isSignature ? 'featured' : ''}}" wx:for="{{item.mainDishes.slice(0,3)}}" wx:for-item="dish" wx:key="index">
+              <text>{{dish.name}} ¥{{dish.price}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 收藏 -->
+    <view class="section-content {{activeTab === 'favorites' ? 'active' : ''}}">
+      <view wx:if="{{favorites.length === 0}}" class="empty-state">
+        <view class="empty-icon">❤️</view>
+        <text class="empty-text">暂无收藏的餐厅</text>
+      </view>
+      <view wx:else class="restaurant-list">
+        <view
+          class="restaurant-item"
+          wx:for="{{favorites}}"
+          wx:key="id"
+          data-id="{{item.id}}"
+          bindtap="showRestaurantDetail"
+        >
+          <view class="restaurant-header">
+            <view class="restaurant-name">
+              <text>{{item.name}}</text>
+              <view class="restaurant-rating">
+                <text>⭐ {{item.rating}}</text>
+              </view>
+            </view>
+            <view class="restaurant-actions">
+              <view class="fav-btn active" data-id="{{item.id}}" catchtap="toggleFavorite">
+                <text>❤️</text>
+              </view>
+            </view>
+          </view>
+          <view class="restaurant-address">
+            <text>📍 {{item.address}}</text>
+            <view class="nav-btn" data-name="{{item.name}}" data-address="{{item.address}}" catchtap="openNavigation">
+              <text>🧭 导航</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 历史 -->
+    <view class="section-content {{activeTab === 'history' ? 'active' : ''}}">
+      <view wx:if="{{history.length === 0}}" class="empty-state">
+        <view class="empty-icon">📜</view>
+        <text class="empty-text">暂无抽签历史</text>
+      </view>
+      <view wx:else class="history-list">
+        <view
+          class="history-item"
+          wx:for="{{history}}"
+          wx:key="index"
+          data-id="{{item.id}}"
+          bindtap="showRestaurantDetail"
+        >
+          <view class="history-header">
+            <text class="history-name">{{item.name}}</text>
+            <text class="history-rating">⭐ {{item.rating}}</text>
+          </view>
+          <view class="history-detail">
+            <text>{{item.type}} · {{item.date}}</text>
+          </view>
+          <view wx:if="{{item.selectedMainDish || item.selectedDrink}}" class="history-selection">
+            <text wx:if="{{item.selectedMainDish}}">🍚 {{item.selectedMainDish.name}}</text>
+            <text wx:if="{{item.selectedDrink}}">🥤 {{item.selectedDrink.name}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 抽签 - 第一步：选店 -->
+  <view class="card lottery-card" wx:if="{{showLottery}}">
+    <view class="card-title">
+      <text class="card-title-icon">🎰</text>
+      <text>第一步：抽店铺</text>
+    </view>
+
+    <view class="lottery-display">
+      <view wx:if="{{isRollingShop}}" class="lottery-rolling">{{rollingShopName}}</view>
+      <view wx:elif="{{selectedShop}}" class="lottery-result">
+        <text class="result-name">{{selectedShop.name}}</text>
+        <text class="result-info">{{selectedShop.type}} · {{selectedShop.address.substring(0,20)}}...</text>
+      </view>
+      <view wx:else class="lottery-placeholder">点击按钮开始抽签</view>
+    </view>
+
+    <view class="lottery-actions">
+      <button wx:if="{{!selectedShop}}" class="btn btn-primary" bindtap="startShopLottery" disabled="{{isRollingShop}}">
+        <text>🎲 开始抽签</text>
+      </button>
+      <view wx:else class="action-buttons">
+        <button class="btn btn-primary" bindtap="confirmShop">
+          <text>✅ 就是这家店，开始选菜</text>
+        </button>
+        <button class="btn btn-secondary" bindtap="resetShop">
+          <text>🔄 重抽</text>
+        </button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 抽签 - 第二步：选菜 -->
+  <view class="card dish-card" wx:if="{{showDishSelection}}">
+    <view class="card-title">
+      <text class="card-title-icon">🍽️</text>
+      <text>第二步：选菜品</text>
+    </view>
+
+    <view class="selected-shop-info">
+      <text class="shop-label">已选店铺</text>
+      <text class="shop-name">{{selectedShop.name}}</text>
+    </view>
+
+    <!-- 主食和饮料标签页 -->
+    <view class="dish-tabs">
+      <view class="dish-tab {{activeDishTab === 'main' ? 'active' : ''}}" data-tab="main" bindtap="switchDishTab">
+        <text>🍚 主食</text>
+        <text wx:if="{{selectedMainDish}}" class="tab-badge">✓</text>
+      </view>
+      <view class="dish-tab {{activeDishTab === 'drink' ? 'active' : ''}}" data-tab="drink" bindtap="switchDishTab">
+        <text>🥤 饮料</text>
+        <text wx:if="{{selectedDrink}}" class="tab-badge">✓</text>
+      </view>
+    </view>
+
+    <!-- 主食列表 -->
+    <view class="dish-content" wx:if="{{activeDishTab === 'main'}}">
+      <view class="dish-list">
+        <view
+          class="dish-item {{selectedMainDish && selectedMainDish.name === item.name ? 'selected' : ''}}"
+          wx:for="{{selectedShop.mainDishes}}"
+          wx:key="index"
+          data-index="{{index}}"
+          data-type="main"
+          bindtap="selectDish"
+        >
+          <text class="dish-name">{{item.name}}</text>
+          <view class="dish-info">
+            <text class="dish-price">¥{{item.price}}</text>
+            <text wx:if="{{item.isSignature}}" class="dish-badge">⭐招牌</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="dish-draw-section">
+        <text class="draw-title">🎲 随机抽取主食</text>
+        <view class="draw-display">
+          <text wx:if="{{isDrawingMain}}" class="drawing-text">{{drawingMainName}}</text>
+          <view wx:elif="{{drawnMainDish}}" class="drawn-result">
+            <text class="result-dish-name">{{drawnMainDish.name}}</text>
+            <text class="result-dish-price">¥{{drawnMainDish.price}} {{drawnMainDish.isSignature ? '⭐招牌' : ''}}</text>
+          </view>
+          <text wx:else class="draw-placeholder">点击按钮随机抽取</text>
+        </view>
+        <button class="btn btn-primary" bindtap="drawMainDish" disabled="{{isDrawingMain}}">
+          <text>{{isDrawingMain ? '抽取中...' : '🎲 开始抽取'}}</text>
+        </button>
+      </view>
+    </view>
+
+    <!-- 饮料列表 -->
+    <view class="dish-content" wx:if="{{activeDishTab === 'drink'}}">
+      <view class="dish-list">
+        <view
+          class="dish-item {{selectedDrink && selectedDrink.name === item.name ? 'selected' : ''}}"
+          wx:for="{{selectedShop.drinks}}"
+          wx:key="index"
+          data-index="{{index}}"
+          data-type="drink"
+          bindtap="selectDish"
+        >
+          <text class="dish-name">{{item.name}}</text>
+          <view class="dish-info">
+            <text class="dish-price">¥{{item.price}}</text>
+            <text wx:if="{{item.isSignature}}" class="dish-badge">⭐招牌</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="dish-draw-section">
+        <text class="draw-title">🎲 随机抽取饮料</text>
+        <view class="draw-display">
+          <text wx:if="{{isDrawingDrink}}" class="drawing-text">{{drawingDrinkName}}</text>
+          <view wx:elif="{{drawnDrink}}" class="drawn-result">
+            <text class="result-dish-name">{{drawnDrink.name}}</text>
+            <text class="result-dish-price">¥{{drawnDrink.price}} {{drawnDrink.isSignature ? '⭐招牌' : ''}}</text>
+          </view>
+          <text wx:else class="draw-placeholder">点击按钮随机抽取</text>
+        </view>
+        <button class="btn btn-primary" bindtap="drawDrink" disabled="{{isDrawingDrink}}">
+          <text>{{isDrawingDrink ? '抽取中...' : '🎲 开始抽取'}}</text>
+        </button>
+      </view>
+    </view>
+
+    <!-- 完成操作 -->
+    <view class="finish-section">
+      <view class="selection-summary" wx:if="{{selectedMainDish || selectedDrink}}">
+        <text class="summary-title">已选择：</text>
+        <view class="summary-item" wx:if="{{selectedMainDish}}">
+          <text>🍚 主食：{{selectedMainDish.name}} ¥{{selectedMainDish.price}}</text>
+        </view>
+        <view class="summary-item" wx:if="{{selectedDrink}}">
+          <text>🥤 饮料：{{selectedDrink.name}} ¥{{selectedDrink.price}}</text>
+        </view>
+        <view class="summary-total">
+          <text>💰 总计：¥{{(selectedMainDish ? selectedMainDish.price : 0) + (selectedDrink ? selectedDrink.price : 0)}}</text>
+        </view>
+      </view>
+      <view class="finish-buttons">
+        <button class="btn btn-primary finish-btn" bindtap="finishSelection">
+          <text>✅ 完成选择</text>
+        </button>
+        <button class="btn btn-secondary back-btn" bindtap="backToShopSelection">
+          <text>🏪 重新选店</text>
+        </button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 餐厅详情弹窗 -->
+  <view class="modal {{showModal ? 'show' : ''}}" bindtap="closeModal">
+    <view class="modal-content" catchtap="preventClose">
+      <view class="modal-header">
+        <text class="modal-title">{{modalRestaurant.name || '餐厅详情'}}</text>
+        <text class="modal-close" bindtap="closeModal">×</text>
+      </view>
+      <scroll-view class="modal-body" scroll-y>
+        <view wx:if="{{modalRestaurant}}">
+          <view class="detail-section">
+            <text class="detail-label">评分</text>
+            <view class="detail-value">
+              <text class="rating-badge">⭐ {{modalRestaurant.rating}}</text>
+              <text class="price-tag">¥{{modalRestaurant.price}}/人</text>
+            </view>
+          </view>
+          <view class="detail-section">
+            <text class="detail-label">地址</text>
+            <view class="detail-value address-row">
+              <text>{{modalRestaurant.address}}</text>
+              <text class="nav-link" catchtap="navigateFromModal">🧭 导航</text>
+            </view>
+          </view>
+          <view class="detail-section">
+            <text class="detail-label">营业时间</text>
+            <text class="detail-value">{{modalRestaurant.hours}}</text>
+          </view>
+          <view class="detail-section">
+            <text class="detail-label">电话</text>
+            <text class="detail-value">{{modalRestaurant.phone}}</text>
+          </view>
+          <view class="detail-section">
+            <text class="detail-label">推荐主食</text>
+            <view class="recommend-list">
+              <view class="recommend-item" wx:for="{{modalRestaurant.mainDishes.filter(item => item.isSignature)}}" wx:key="index">
+                <text>{{item.name}} ¥{{item.price}}</text>
+              </view>
+            </view>
+          </view>
+          <view class="detail-section">
+            <text class="detail-label">推荐饮品</text>
+            <view class="recommend-list drink-list">
+              <view class="recommend-item" wx:for="{{modalRestaurant.drinks.filter(item => item.isSignature)}}" wx:key="index">
+                <text>{{item.name}} ¥{{item.price}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+  </view>
+
+  <!-- 完成总结弹窗 -->
+  <view class="modal {{showSummary ? 'show' : ''}}" bindtap="closeSummary">
+    <view class="modal-content summary-content" catchtap="preventClose">
+      <view class="summary-header">
+        <text class="summary-emoji">🎉</text>
+        <text class="summary-title">决定了！</text>
+      </view>
+      <view class="summary-body">
+        <view class="summary-shop">
+          <text class="shop-label">📍 店铺</text>
+          <text class="shop-name">{{selectedShop.name}}</text>
+        </view>
+        <view wx:if="{{selectedMainDish}}" class="summary-dish">
+          <text class="dish-label">🍚 主食</text>
+          <text class="dish-name">{{selectedMainDish.name}}</text>
+          <text class="dish-price">¥{{selectedMainDish.price}}</text>
+        </view>
+        <view wx:if="{{selectedDrink}}" class="summary-dish">
+          <text class="dish-label">🥤 饮料</text>
+          <text class="dish-name">{{selectedDrink.name}}</text>
+          <text class="dish-price">¥{{selectedDrink.price}}</text>
+        </view>
+        <view class="summary-total">
+          <text class="total-label">💰 总计</text>
+          <text class="total-price">¥{{(selectedMainDish ? selectedMainDish.price : 0) + (selectedDrink ? selectedDrink.price : 0)}}</text>
+        </view>
+      </view>
+      <view class="summary-actions">
+        <button class="btn btn-primary share-btn" open-type="share">
+          <text>📤 分享给朋友</text>
+        </button>
+        <button class="btn btn-secondary" bindtap="closeSummary">
+          <text>👍 确定</text>
+        </button>
+      </view>
+    </view>
+  </view>
+
+  <!-- Toast 提示 -->
+  <view class="toast {{toast.show ? 'show' : ''}} {{toast.type}}">
+    <text>{{toast.message}}</text>
+  </view>
+</view>
