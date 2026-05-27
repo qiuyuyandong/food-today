@@ -6,8 +6,25 @@
     <text class="header-subtitle">让命运决定你的下一餐</text>
   </view>
 
-  <!-- 定位部分 -->
+
+  <!-- 决策模式 -->
   <view class="card">
+    <view class="card-title">
+      <text class="card-title-icon">🧭</text>
+      <text>选择就餐方式</text>
+    </view>
+    <view class="mode-switch">
+      <view class="mode-option {{decisionMode === 'takeout' ? 'active' : ''}}" data-mode="takeout" bindtap="switchMode">
+        🛵 外卖/到店
+      </view>
+      <view class="mode-option {{decisionMode === 'cooking' ? 'active' : ''}}" data-mode="cooking" bindtap="switchMode">
+        🍳 做菜
+      </view>
+    </view>
+  </view>
+
+  <!-- 定位部分 -->
+  <view class="card" wx:if="{{decisionMode === 'takeout'}}">
     <view class="card-title">
       <text class="card-title-icon">📍</text>
       <text>当前位置</text>
@@ -22,7 +39,7 @@
   </view>
 
   <!-- 筛选部分 -->
-  <view class="card" wx:if="{{showFilter}}">
+  <view class="card" wx:if="{{decisionMode === 'takeout' && showFilter}}">
     <view class="card-title">
       <text class="card-title-icon">🔍</text>
       <text>筛选条件</text>
@@ -68,7 +85,7 @@
   </view>
 
   <!-- 餐厅列表 -->
-  <view class="card" wx:if="{{showRestaurantList}}">
+  <view class="card" wx:if="{{decisionMode === 'takeout' && showRestaurantList}}">
     <view class="section-tabs">
       <view class="section-tab {{activeTab === 'restaurants' ? 'active' : ''}}" data-tab="restaurants" bindtap="switchTab">
         <text>🍽️ 附近</text>
@@ -91,7 +108,7 @@
           wx:for="{{filteredRestaurants}}"
           wx:key="id"
           data-id="{{item.id}}"
-          bindtap="showRestaurantDetail"
+          bindtap="browseShopMenu"
         >
           <view class="restaurant-header">
             <view class="restaurant-name">
@@ -133,7 +150,7 @@
           wx:for="{{favorites}}"
           wx:key="id"
           data-id="{{item.id}}"
-          bindtap="showRestaurantDetail"
+          bindtap="browseShopMenu"
         >
           <view class="restaurant-header">
             <view class="restaurant-name">
@@ -170,7 +187,7 @@
           wx:for="{{history}}"
           wx:key="index"
           data-id="{{item.id}}"
-          bindtap="showRestaurantDetail"
+          bindtap="browseShopMenu"
         >
           <view class="history-header">
             <text class="history-name">{{item.name}}</text>
@@ -189,7 +206,7 @@
   </view>
 
   <!-- 抽签 - 第一步：选店 -->
-  <view class="card lottery-card" wx:if="{{showLottery}}">
+  <view class="card lottery-card" wx:if="{{decisionMode === 'takeout' && showLottery}}">
     <view class="card-title">
       <text class="card-title-icon">🎰</text>
       <text>第一步：抽店铺</text>
@@ -200,6 +217,10 @@
       <view wx:elif="{{selectedShop}}" class="lottery-result">
         <text class="result-name">{{selectedShop.name}}</text>
         <text class="result-info">{{selectedShop.type}} · {{selectedShop.address.substring(0,20)}}...</text>
+        <view class="lottery-extra-actions">
+          <text class="extra-link" bindtap="browseSelectedShopMenu">📖 浏览菜单</text>
+          <text class="extra-link" bindtap="navigateToSelectedShop">🧭 导航过去</text>
+        </view>
       </view>
       <view wx:else class="lottery-placeholder">点击按钮开始抽签</view>
     </view>
@@ -220,7 +241,7 @@
   </view>
 
   <!-- 抽签 - 第二步：选菜 -->
-  <view class="card dish-card" wx:if="{{showDishSelection}}">
+  <view class="card dish-card" wx:if="{{decisionMode === 'takeout' && showDishSelection}}">
     <view class="card-title">
       <text class="card-title-icon">🍽️</text>
       <text>第二步：选菜品</text>
@@ -336,6 +357,20 @@
         </button>
       </view>
     </view>
+  </view>
+
+
+  <!-- 做菜模式 -->
+  <view class="card" wx:if="{{decisionMode === 'cooking'}}">
+    <view class="card-title">
+      <text class="card-title-icon">🍳</text>
+      <text>今天做什么菜</text>
+    </view>
+    <view class="cooking-result">
+      <text wx:if="{{selectedCookingIdea}}" class="cooking-name">{{selectedCookingIdea}}</text>
+      <text wx:else class="cooking-placeholder">点击按钮抽取今日菜谱</text>
+    </view>
+    <button class="btn btn-primary" bindtap="drawCookingIdea">🎲 换一道菜</button>
   </view>
 
   <!-- 餐厅详情弹窗 -->
