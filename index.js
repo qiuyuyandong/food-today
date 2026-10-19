@@ -3,6 +3,11 @@ const { restaurantDB } = require('../../utils/data.js');
 
 Page({
   data: {
+    // 模式选择
+    decisionMode: 'takeout', // 'takeout' | 'cooking'
+    cookingIdeas: ['番茄鸡蛋面', '青椒牛肉盖饭', '蒜香意面', '鸡胸肉沙拉', '土豆咖喱饭'],
+    selectedCookingIdea: '',
+
     // 定位相关
     location: null,
     locationStatus: '', // '', 'success', 'error'
@@ -98,6 +103,23 @@ Page({
     }));
 
     this.setData({ restaurants });
+  },
+
+  // ========== 模式切换 ==========
+
+  switchMode(e) {
+    const mode = e.currentTarget.dataset.mode;
+    this.setData({ decisionMode: mode });
+    if (mode === 'cooking' && !this.data.selectedCookingIdea) {
+      this.drawCookingIdea();
+    }
+  },
+
+  drawCookingIdea() {
+    const { cookingIdeas } = this.data;
+    if (!cookingIdeas.length) return;
+    const randomIndex = Math.floor(Math.random() * cookingIdeas.length);
+    this.setData({ selectedCookingIdea: cookingIdeas[randomIndex] });
   },
 
   // ========== 定位功能 ==========
@@ -265,6 +287,40 @@ Page({
   },
 
   // ========== 餐厅详情 ==========
+
+  browseShopMenu(e) {
+    const id = e.currentTarget.dataset.id;
+    const restaurant = this.data.restaurants.find(r => r.id === id);
+
+    if (restaurant) {
+      this.setData({
+        showModal: true,
+        modalRestaurant: restaurant
+      });
+    }
+  },
+
+  browseSelectedShopMenu() {
+    const { selectedShop } = this.data;
+    if (!selectedShop) return;
+    this.setData({
+      showModal: true,
+      modalRestaurant: selectedShop
+    });
+  },
+
+  navigateToSelectedShop() {
+    const { selectedShop } = this.data;
+    if (!selectedShop) return;
+
+    wx.openLocation({
+      latitude: parseFloat(selectedShop.lat) || 39.9,
+      longitude: parseFloat(selectedShop.lng) || 116.4,
+      name: selectedShop.name,
+      address: selectedShop.address,
+      scale: 18
+    });
+  },
 
   showRestaurantDetail(e) {
     const id = e.currentTarget.dataset.id;
